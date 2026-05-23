@@ -1,6 +1,7 @@
 import {
   apiContracts,
   backtestSummary,
+  macroRegime,
   marketSummary,
   reports,
   researchProfiles,
@@ -106,6 +107,10 @@ function selectedKlineStock() {
 
 function selectedReport() {
   return reports.find((report) => report.id === state.selectedReportId) || reports[0];
+}
+
+function canRunStockSelection() {
+  return macroRegime.allowStockSelection;
 }
 
 function isWatched(id) {
@@ -282,11 +287,12 @@ function renderHome() {
   const weekly = byWeeklyRank(stocks).slice(0, 4);
 
   return `
+    ${renderMacroGate()}
     <section class="hero-grid">
       <div class="hero-copy">
         <span class="layer-pill">第一层：小白看</span>
-        <h2>先看候选、分数、风险和理由。</h2>
-        <p>首页只回答小白用户当下要判断的几件事：今天和本周有哪些候选股，为什么上榜，风险是什么，要观察多久。</p>
+        <h2>先确认大方向，再看候选股。</h2>
+        <p>执行顺序固定为：宏观情况、板块方向、仓位配置、风险提醒，最后才进入个股榜单。</p>
         <div class="hero-actions">
           <button class="primary-button" data-view="today" type="button">${iconPath("M5 12h14 M13 6l6 6-6 6")}查看今日精选</button>
           <button class="ghost-button" data-view="week" type="button">${iconPath("M6 4h12v16H6z M9 8h6 M9 12h6 M9 16h3")}查看本周精选</button>
@@ -356,6 +362,56 @@ function renderHome() {
   `;
 }
 
+function renderMacroGate() {
+  return `
+    <section class="macro-gate">
+      <div class="macro-head">
+        <div>
+          <span class="layer-pill">执行前检查</span>
+          <h2>${macroRegime.regime}</h2>
+          <p>${macroRegime.summary}</p>
+        </div>
+        <div class="macro-status ${macroRegime.allowStockSelection ? "is-open" : "is-closed"}">
+          <span>${macroRegime.status}</span>
+          <strong>${macroRegime.confidence}</strong>
+          <em>宏观置信度</em>
+        </div>
+      </div>
+      <div class="macro-flow">
+        <span>宏观</span>
+        <span>板块</span>
+        <span>仓位</span>
+        <span>风险</span>
+        <span>个股</span>
+      </div>
+      <div class="macro-grid">
+        <div>
+          <h3>宏观信号</h3>
+          ${macroRegime.macroSignals.map((item) => `
+            <p><strong>${item.label}：${item.value}</strong>${item.tone}</p>
+          `).join("")}
+        </div>
+        <div>
+          <h3>板块方向</h3>
+          ${macroRegime.sectorAllocation.map((item) => `
+            <p><strong>${item.name} · ${item.stance}</strong>${item.target} · ${item.reason}</p>
+          `).join("")}
+        </div>
+        <div>
+          <h3>仓位配置</h3>
+          <p><strong>总仓位：</strong>${macroRegime.positionGuidance.gross}</p>
+          <p><strong>单只上限：</strong>${macroRegime.positionGuidance.singleStock}</p>
+          <p><strong>现金缓冲：</strong>${macroRegime.positionGuidance.cashBuffer}</p>
+        </div>
+        <div>
+          <h3>风险提醒</h3>
+          ${macroRegime.riskReminders.map((item) => `<p>${item}</p>`).join("")}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
 function renderStrategySummaryCard() {
   const strategy = selectedStrategy();
   return `
@@ -385,17 +441,20 @@ function renderSelection(type) {
     : "周频结果更关注连续性，适合每周复盘和更新观察名单。";
   const ranked = isDaily ? byDailyRank(stocks) : byWeeklyRank(stocks);
   const strategy = selectedStrategy();
+  const canSelect = canRunStockSelection();
 
   return `
     <section class="page-intro">
       <div>
         <h2>${title}</h2>
-        <p>${helper} 当前策略：${strategy.name}。</p>
+        <p>${helper} 当前策略：${strategy.name}。宏观状态：${macroRegime.status}。</p>
       </div>
       <div class="notice-strip">策略参数：${strategy.apiHint}</div>
     </section>
     <section class="stock-grid">
-      ${ranked.slice(0, 8).map((stock, index) => renderStockCard(stock, type, index + 1)).join("")}
+      ${canSelect
+        ? ranked.slice(0, 8).map((stock, index) => renderStockCard(stock, type, index + 1)).join("")
+        : renderMacroBlockedState()}
     </section>
   `;
 }
@@ -408,13 +467,14 @@ function renderRanking(market) {
   const ranked = rankedAll.slice(0, state.topN);
   const frequencyLabel = state.rankingFrequency === "weekly" ? "周频" : "日频";
   const strategy = selectedStrategy();
+  const canSelect = canRunStockSelection();
 
   return `
     <section class="page-intro ranking-intro">
       <div>
         <span class="layer-pill muted">第二层：研究人员看</span>
         <h2>${title}</h2>
-        <p>当前展示 ${frequencyLabel} Top ${state.topN} 样例，已按“${strategy.name}”重排，专业指标放到详情页展开。</p>
+        <p>${macroRegime.status}后展示 ${frequencyLabel} Top ${state.topN}，已按“${strategy.name}”重排。</p>
       </div>
       <div class="ranking-controls">
         <label class="filter-control">
@@ -447,7 +507,9 @@ function renderRanking(market) {
       <div class="ranking-row ranking-head">
         <span>排名</span><span>股票</span><span>评分</span><span>风险</span><span>观察周期</span><span>入选理由</span><span>操作</span>
       </div>
-      ${ranked.length ? ranked.map((stock, index) => renderRankingRow(stock, index + 1)).join("") : renderEmptyRanking()}
+      ${canSelect && ranked.length
+        ? ranked.map((stock, index) => renderRankingRow(stock, index + 1)).join("")
+        : renderEmptyRanking()}
     </section>
   `;
 }
@@ -732,10 +794,22 @@ function renderEmptyWatchlist() {
 }
 
 function renderEmptyRanking() {
+  if (!canRunStockSelection()) {
+    return renderMacroBlockedState();
+  }
   return `
     <div class="empty-state ranking-empty">
       <h3>当前筛选暂无样例</h3>
       <p>可以切换风险等级、榜单周期或 Top 数量查看其他 mock 候选股。</p>
+    </div>
+  `;
+}
+
+function renderMacroBlockedState() {
+  return `
+    <div class="empty-state ranking-empty">
+      <h3>宏观状态暂不支持进入个股筛选</h3>
+      <p>先复核宏观风险、板块方向和仓位上限；大方向恢复后再输出候选股。</p>
     </div>
   `;
 }

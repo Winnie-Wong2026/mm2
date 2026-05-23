@@ -43,6 +43,8 @@ class SecurityFactorRow:
 class MomentumQualityDailyStrategy(BaseStrategy):
     def generate_signals(self, factor_data: Any, context: StrategyContext) -> List[StrategySignal]:
         self.validate_context(context)
+        if not self.should_run_stock_selection(context):
+            return []
         rows = [
             row
             for row in normalize_factor_input(factor_data, context.trade_date)

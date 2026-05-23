@@ -1,6 +1,6 @@
 """Strategy plugin framework."""
 
-from .base import BaseStrategy, StrategyContext
+from .base import BaseStrategy, MacroAssessment, PositionGuidance, SectorAllocation, StrategyContext
 from .config import StrategyConfig
 from .explanations import (
     BaseExplanationTemplate,
@@ -18,6 +18,9 @@ __all__ = [
     "ExplanationContext",
     "ExplanationTemplateRegistry",
     "FactorContribution",
+    "MacroAssessment",
+    "PositionGuidance",
+    "SectorAllocation",
     "StrategyConfig",
     "StrategyContext",
     "StrategyRegistry",

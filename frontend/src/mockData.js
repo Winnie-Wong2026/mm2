@@ -14,6 +14,37 @@ export const marketSummary = {
   ]
 };
 
+export const macroRegime = {
+  asOf: "2026-05-22 17:40",
+  status: "允许轻仓观察",
+  allowStockSelection: true,
+  regime: "结构性中性偏谨慎",
+  confidence: 72,
+  summary: "宏观环境没有触发全面回避，但波动中等偏高，应先控制总仓位，再做行业和个股筛选。",
+  macroSignals: [
+    { label: "流动性", value: "中性", tone: "资金面未明显收紧" },
+    { label: "风险偏好", value: "谨慎", tone: "高波动主题需要降权" },
+    { label: "跨市场", value: "分化", tone: "A股偏结构，港股修复但外部扰动更高" }
+  ],
+  sectorAllocation: [
+    { name: "高端制造", stance: "优先观察", target: "25%", reason: "趋势改善，成交活跃" },
+    { name: "互联网平台", stance: "谨慎增配", target: "20%", reason: "港股修复延续，但事件扰动仍高" },
+    { name: "金融", stance: "防守配置", target: "20%", reason: "波动较低，适合作为组合稳定器" },
+    { name: "半导体", stance: "控制仓位", target: "15%", reason: "热度高但波动同步抬升" }
+  ],
+  positionGuidance: {
+    gross: "30% 到 50%",
+    singleStock: "单只不超过 8%",
+    cashBuffer: "保留至少 50% 现金或低风险仓位",
+    rebalance: "只有宏观状态维持允许观察时，再按日频榜单小步调整。"
+  },
+  riskReminders: [
+    "若市场波动继续上升，先降总仓位，再减少高波动行业暴露。",
+    "行业方向不清晰时，只保留观察名单，不扩大候选股数量。",
+    "任何个股入选都不能覆盖宏观风险和组合仓位约束。"
+  ]
+};
+
 export const strategyProfiles = [
   {
     id: "momentum_quality_daily",
