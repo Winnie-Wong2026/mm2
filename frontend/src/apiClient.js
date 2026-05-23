@@ -131,7 +131,11 @@ function rankingToStock(row, frequency) {
     },
     priceSeries: fallback?.priceSeries || [45, 47, 46, 49, 50, 52, 51, 54],
     explain: row.reason_summary || fallback?.explain || "来自后端 API 的候选解释。",
-    apiHint: `/api/stocks/${row.symbol}`
+    apiHint: `/api/stocks/${row.symbol}`,
+    apiRanked: {
+      ...(fallback?.apiRanked || {}),
+      [frequency]: true
+    }
   };
 }
 
@@ -145,7 +149,11 @@ function mergeRankingStocks(rankingGroups) {
         ...existing,
         ...stock,
         dailyRank: frequency === "daily" ? stock.dailyRank : existing.dailyRank,
-        weeklyRank: frequency === "weekly" ? stock.weeklyRank : existing.weeklyRank
+        weeklyRank: frequency === "weekly" ? stock.weeklyRank : existing.weeklyRank,
+        apiRanked: {
+          ...(existing.apiRanked || {}),
+          ...(stock.apiRanked || {})
+        }
       });
     }
   }

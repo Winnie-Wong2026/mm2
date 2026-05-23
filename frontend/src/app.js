@@ -220,6 +220,9 @@ function strategyReason(stock) {
 
 function strategyRankValue(stock, frequency) {
   const baseRank = frequency === "weekly" ? stock.weeklyRank : stock.dailyRank;
+  if (stock.apiRanked?.[frequency]) {
+    return 2000 - baseRank * 5 + stock.score;
+  }
   return strategyAdjustedScore(stock) * 10 + Math.max(0, 80 - baseRank);
 }
 

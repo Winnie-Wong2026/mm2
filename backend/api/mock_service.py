@@ -1,4 +1,6 @@
+import json
 from copy import deepcopy
+from pathlib import Path
 from typing import Optional
 
 from backend.api.watchlist_store import watchlist_store
@@ -8,6 +10,24 @@ MOCK_UPDATED_AT = "2026-05-22T18:30:00+08:00"
 MOCK_PUBLISHED_AT = "2026-05-22T19:00:00+08:00"
 DEFAULT_STRATEGY_ID = "momentum_quality_daily"
 RISK_NOTICE = "本报告仅用于内部研究参考，不构成投资建议。"
+PROCESSED_RANKING_ROOT = Path("data/processed/rankings")
+
+_SECURITY_PROFILE_OVERRIDES = {
+    "000001.SZ": {
+        "name": "平安银行",
+        "exchange": "szse",
+        "industry": "银行",
+        "risk_level": "中",
+        "horizon": "20日",
+    },
+    "00700.HK": {
+        "name": "腾讯控股",
+        "exchange": "hkex",
+        "industry": "互联网",
+        "risk_level": "中",
+        "horizon": "20日",
+    },
+}
 
 _MACRO_REGIME = {
     "as_of": "2026-05-22T17:40:00+08:00",
@@ -299,6 +319,46 @@ for strategy_id, overrides in _STRATEGY_VARIANT_OVERRIDES.items():
         _RANKINGS.append(variant)
 
 _STOCK_DETAILS = {
+    "000001.SZ": {
+        "symbol": "000001.SZ",
+        "name": "平安银行",
+        "market": "cn",
+        "exchange": "szse",
+        "industry": "银行",
+        "score": 61.5,
+        "rank": 1,
+        "risk_level": "中",
+        "horizon": "20日",
+        "reason_summary": "v0.2 本地策略样本显示量能改善，作为数据链路验证候选。",
+        "advantages": ["成交额改善", "流动性充足", "银行板块样本可用于 A股链路验证"],
+        "risks": ["样本窗口较短", "仍需更多历史数据验证"],
+        "recent_performance": {
+            "return_5d": 0.7,
+            "return_20d": 0.7,
+            "max_drawdown_20d": -1.1,
+        },
+        "factor_summary": [
+            {
+                "factor_name": "amount_change_20d",
+                "factor_label": "量能变化",
+                "score": 100.0,
+                "explanation": "v0.2 样本窗口内成交额较前期均值明显提升。",
+            },
+            {
+                "factor_name": "quality_score",
+                "factor_label": "质量代理分",
+                "score": 66.4,
+                "explanation": "当前使用流动性代理质量分，后续会替换为财务质量因子。",
+            },
+        ],
+        "price_series": [
+            {"trade_date": "2024-01-02", "close": 9.21, "amount": 1075742252},
+            {"trade_date": "2024-01-03", "close": 9.20, "amount": 673673614},
+            {"trade_date": "2024-01-04", "close": 9.11, "amount": 787470082},
+            {"trade_date": "2024-01-05", "close": 9.27, "amount": 1852659692},
+        ],
+        "updated_at": "2024-01-05T17:00:00+08:00",
+    },
     "600519.SH": {
         "symbol": "600519.SH",
         "name": "贵州茅台",
@@ -557,6 +617,96 @@ def paginate(items: list, page: int, page_size: int) -> tuple[list, int]:
     return items[start:end], total
 
 
+def _ranking_output_path(strategy_id: str, frequency: str, market: str, top_n: int) -> Path:
+    return (
+        PROCESSED_RANKING_ROOT
+        / f"strategy_id={strategy_id}"
+        / f"frequency={frequency}"
+        / f"market={market}"
+        / f"top_n={top_n}"
+        / "part.jsonl"
+    )
+
+
+def _describe_contributions(contributions: list[dict]) -> list[str]:
+    descriptions = []
+    for item in contributions:
+        label = item.get("display_name") or item.get("factor_name") or "因子"
+        score = item.get("score")
+        if score is None:
+            descriptions.append(str(label))
+        else:
+            descriptions.append(f"{label} {float(score):.0f}分")
+    return descriptions
+
+
+def _security_profile(symbol: str, market: str) -> dict:
+    detail = _STOCK_DETAILS.get(symbol)
+    if detail:
+        return {
+            "name": detail["name"],
+            "exchange": detail["exchange"],
+            "industry": detail["industry"],
+            "risk_level": detail["risk_level"],
+            "horizon": detail["horizon"],
+        }
+    return {
+        "name": _SECURITY_PROFILE_OVERRIDES.get(symbol, {}).get("name", symbol),
+        "exchange": _SECURITY_PROFILE_OVERRIDES.get(symbol, {}).get(
+            "exchange", "hkex" if market == "hk" else "unknown"
+        ),
+        "industry": _SECURITY_PROFILE_OVERRIDES.get(symbol, {}).get("industry", "待分类"),
+        "risk_level": _SECURITY_PROFILE_OVERRIDES.get(symbol, {}).get("risk_level", "中"),
+        "horizon": _SECURITY_PROFILE_OVERRIDES.get(symbol, {}).get("horizon", "20日"),
+    }
+
+
+def _load_generated_rankings(
+    market: str,
+    frequency: str,
+    top_n: int,
+    strategy_id: str,
+) -> Optional[list[dict]]:
+    path = _ranking_output_path(strategy_id, frequency, market, top_n)
+    if not path.exists():
+        return None
+
+    rows: list[dict] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            output = json.loads(line)
+            generated_at = output.get("generated_at") or MOCK_UPDATED_AT
+            for candidate in output.get("candidates", []):
+                symbol = str(candidate.get("symbol", "")).upper()
+                if not symbol:
+                    continue
+                profile = _security_profile(symbol, market)
+                rows.append(
+                    {
+                        "symbol": symbol,
+                        "name": profile["name"],
+                        "market": market,
+                        "exchange": profile["exchange"],
+                        "industry": profile["industry"],
+                        "rank": int(candidate.get("rank", len(rows) + 1)),
+                        "score": float(candidate.get("score", 0.0)),
+                        "risk_level": candidate.get("risk_level") or profile["risk_level"],
+                        "horizon": candidate.get("horizon") or profile["horizon"],
+                        "reason_summary": candidate.get("reason_summary", "本地策略样本候选。"),
+                        "positive_factors": _describe_contributions(
+                            candidate.get("positive_factors") or []
+                        ),
+                        "negative_factors": _describe_contributions(
+                            candidate.get("negative_factors") or []
+                        ),
+                        "updated_at": generated_at,
+                    }
+                )
+    return rows or None
+
+
 def get_macro_regime() -> dict:
     return deepcopy(_MACRO_REGIME)
 
@@ -573,6 +723,16 @@ def list_rankings(
     page: int,
     page_size: int,
 ) -> tuple[list, int]:
+    generated = _load_generated_rankings(
+        market=market,
+        frequency=frequency,
+        top_n=top_n,
+        strategy_id=strategy_id,
+    )
+    if generated is not None:
+        page_items, total = paginate(generated, page, page_size)
+        return deepcopy(page_items), total
+
     filtered = [
         item
         for item in _RANKINGS

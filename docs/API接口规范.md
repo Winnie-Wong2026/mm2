@@ -311,6 +311,8 @@ GET /api/macro-regime
 GET /api/rankings
 ```
 
+v0.2 约定：接口优先读取 `data/processed/rankings/` 下的本地策略输出；如果对应 `strategy_id / frequency / market / top_n` 文件不存在，再回落到内置样例榜单。
+
 参数：
 
 | 参数 | 类型 | 必填 | 说明 |
