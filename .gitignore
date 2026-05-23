@@ -23,8 +23,8 @@ build/
 *.log
 .env
 .env.*
+data/local/
 
 # Release archives
 *.zip
 *.tar.gz
-

@@ -1,19 +1,30 @@
 import {
   apiContracts,
   backtestSummary,
-  macroRegime,
-  marketSummary,
-  reports,
   researchProfiles,
-  stocks,
-  strategyProfiles
+  macroRegime as mockMacroRegime,
+  marketSummary as mockMarketSummary,
+  reports as mockReports,
+  stocks as mockStocks,
+  strategyProfiles as mockStrategyProfiles
 } from "./mockData.js";
+import {
+  addWatchlistItem,
+  loadDashboardData,
+  removeWatchlistItem
+} from "./apiClient.js";
 
 const app = document.querySelector("#app");
 const defaultWatchlist = [
   { id: "600519.SH", note: "偏稳健，观察成交额改善能否延续" },
   { id: "00700.HK", note: "港股核心观察池，跟踪连续上榜原因" }
 ];
+
+let marketSummary = mockMarketSummary;
+let macroRegime = mockMacroRegime;
+let reports = mockReports;
+let stocks = mockStocks;
+let strategyProfiles = mockStrategyProfiles;
 
 const state = {
   activeView: "home",
@@ -28,7 +39,12 @@ const state = {
   klineStockId: null,
   klineFrequency: "daily",
   klineRange: "3m",
-  watchlist: loadWatchlist()
+  watchlist: loadWatchlist(),
+  apiStatus: {
+    mode: "loading",
+    label: "正在连接后端 API",
+    detail: "如果后端不可用，将自动使用本地样例数据。"
+  }
 };
 
 const views = [
@@ -109,8 +125,52 @@ function selectedReport() {
   return reports.find((report) => report.id === state.selectedReportId) || reports[0];
 }
 
+function selectedReportIdIsValid() {
+  return reports.some((report) => report.id === state.selectedReportId);
+}
+
 function canRunStockSelection() {
   return macroRegime.allowStockSelection;
+}
+
+async function hydrateFromApi() {
+  try {
+    const dashboard = await loadDashboardData({
+      strategyId: state.strategyId,
+      topN: state.topN
+    });
+    marketSummary = dashboard.marketSummary;
+    macroRegime = dashboard.macroRegime;
+    reports = dashboard.reports;
+    stocks = dashboard.stocks;
+    strategyProfiles = dashboard.strategyProfiles;
+    if (dashboard.watchlist.length) {
+      state.watchlist = dashboard.watchlist;
+      saveWatchlist();
+    }
+    if (!strategyProfiles.some((strategy) => strategy.id === state.strategyId)) {
+      state.strategyId = strategyProfiles[0].id;
+      saveStrategyId();
+    }
+    if (!stocks.some((stock) => stock.id === state.selectedStockId)) {
+      state.selectedStockId = stocks[0]?.id || state.selectedStockId;
+    }
+    if (!selectedReportIdIsValid()) {
+      state.selectedReportId = reports[0]?.id || state.selectedReportId;
+    }
+    state.apiStatus = {
+      mode: "api",
+      label: "后端 API 已连接",
+      detail: `数据来自 ${dashboard.apiBase}`
+    };
+  } catch (error) {
+    state.apiStatus = {
+      mode: "mock",
+      label: "本地样例数据模式",
+      detail: "后端暂不可用，已使用本地样例数据。"
+    };
+  }
+  render();
 }
 
 function isWatched(id) {
@@ -234,7 +294,7 @@ function renderTopbar() {
   return `
     <header class="topbar">
       <div>
-        <p class="section-kicker">本地 mock 原型</p>
+        <p class="section-kicker">${state.apiStatus.label}</p>
         <h1>${views.find((view) => view.id === state.activeView)?.label || "首页"}</h1>
       </div>
       <div class="topbar-tools">
@@ -242,6 +302,7 @@ function renderTopbar() {
         <div class="topbar-status">
           <span>最近更新：${marketSummary.updatedAt}</span>
           <strong>${marketSummary.dataStatus}</strong>
+          <small>${state.apiStatus.detail}</small>
         </div>
       </div>
     </header>
@@ -283,68 +344,102 @@ function renderActiveView() {
 }
 
 function renderHome() {
-  const today = byDailyRank(stocks).slice(0, 4);
-  const weekly = byWeeklyRank(stocks).slice(0, 4);
+  const today = byDailyRank(stocks).slice(0, 3);
+  const weekly = byWeeklyRank(stocks).slice(0, 3);
+  const strategy = selectedStrategy();
 
   return `
-    ${renderMacroGate()}
-    <section class="hero-grid">
-      <div class="hero-copy">
-        <span class="layer-pill">第一层：小白看</span>
-        <h2>先确认大方向，再看候选股。</h2>
-        <p>执行顺序固定为：宏观情况、板块方向、仓位配置、风险提醒，最后才进入个股榜单。</p>
-        <div class="hero-actions">
+    <section class="home-overview">
+      <article class="home-primary">
+        <div class="home-primary-head">
+          <div>
+            <span class="layer-pill">今日决策概览</span>
+            <h2>先判断能不能看，再决定看什么。</h2>
+            <p>首页只保留四个关键动作：确认宏观状态、选择策略、查看候选、加入观察名单。</p>
+          </div>
+          <div class="macro-status ${macroRegime.allowStockSelection ? "is-open" : "is-closed"}">
+            <span>${macroRegime.status}</span>
+            <strong>${macroRegime.confidence}</strong>
+            <em>宏观置信度</em>
+          </div>
+        </div>
+
+        <div class="decision-steps">
+          ${renderDecisionStep("01", "宏观状态", macroRegime.regime, macroRegime.status)}
+          ${renderDecisionStep("02", "当前策略", strategy.name, strategy.riskPreference)}
+          ${renderDecisionStep("03", "仓位上限", macroRegime.positionGuidance.gross, macroRegime.positionGuidance.singleStock)}
+          ${renderDecisionStep("04", "下一步", "看候选池", "从今日精选或本周精选进入")}
+        </div>
+
+        <div class="home-actions">
           <button class="primary-button" data-view="today" type="button">${iconPath("M5 12h14 M13 6l6 6-6 6")}查看今日精选</button>
           <button class="ghost-button" data-view="week" type="button">${iconPath("M6 4h12v16H6z M9 8h6 M9 12h6 M9 16h3")}查看本周精选</button>
+          <button class="ghost-button" data-view="watchlist" type="button">${iconPath("M12 3l2.6 5.3 5.9.9-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.9z")}观察名单</button>
         </div>
-      </div>
-      <div class="hero-side-stack">
-        <div class="layer-card">
-          <div class="layer-card-head">
-            <span>第一层默认字段</span>
-            <strong>小白可读</strong>
+      </article>
+
+      <aside class="home-context">
+        ${renderStrategySummaryCard("compact")}
+        <div class="home-mini-card">
+          <div>
+            <span>数据状态</span>
+            <strong>${marketSummary.dataStatus}</strong>
           </div>
-          <div class="layer-field-list">
-            <span>今日精选</span>
-            <span>本周精选</span>
-            <span>AI 综合评分</span>
-            <span>风险等级</span>
-            <span>为什么上榜</span>
-            <span>适合观察多久</span>
-            <span>主要风险是什么</span>
-            <span>是否进入观察名单</span>
+          <p>最近更新：${marketSummary.updatedAt}；下次更新：${marketSummary.nextRefresh}。</p>
+          <div class="mini-metrics">
+            <span><strong>${marketSummary.dailyCount}</strong>今日样例</span>
+            <span><strong>${marketSummary.weeklyCount}</strong>本周样例</span>
+            <span><strong>${state.watchlist.length}</strong>已观察</span>
           </div>
         </div>
-        ${renderStrategySummaryCard()}
-      </div>
+      </aside>
     </section>
 
-    <section class="content-grid two-col">
-      <div>
+    <section class="home-workbench">
+      <article class="candidate-board">
         <div class="section-title">
-          <h3>今日精选</h3>
-          <button class="link-button" data-view="today" type="button">查看全部</button>
+          <div>
+            <h3>候选股工作台</h3>
+            <p>先看 Top 3，完整列表再进入对应页面。</p>
+          </div>
+          <button class="link-button" data-view="today" type="button">查看全部候选</button>
         </div>
-        <div class="stock-grid compact">
-          ${today.map((stock, index) => renderStockCard(stock, "daily", index + 1)).join("")}
+        <div class="candidate-columns">
+          <div class="candidate-list">
+            <div class="candidate-list-head">
+              <strong>今日精选</strong>
+              <button class="link-button" data-view="today" type="button">日频榜单</button>
+            </div>
+            ${today.map((stock, index) => renderHomeCandidateRow(stock, "daily", index + 1)).join("")}
+          </div>
+          <div class="candidate-list">
+            <div class="candidate-list-head">
+              <strong>本周精选</strong>
+              <button class="link-button" data-view="week" type="button">周频榜单</button>
+            </div>
+            ${weekly.map((stock, index) => renderHomeCandidateRow(stock, "weekly", index + 1)).join("")}
+          </div>
         </div>
-      </div>
-      <div>
+      </article>
+
+      <aside class="market-focus-panel">
         <div class="section-title">
-          <h3>本周精选</h3>
-          <button class="link-button" data-view="week" type="button">查看全部</button>
+          <h3>板块与风险</h3>
         </div>
-        <div class="stock-grid compact">
-          ${weekly.map((stock, index) => renderStockCard(stock, "weekly", index + 1)).join("")}
+        <div class="sector-focus-list">
+          ${macroRegime.sectorAllocation.slice(0, 4).map((item, index) => renderSectorFocus(item, index)).join("")}
         </div>
-      </div>
+        <div class="risk-note-list">
+          ${macroRegime.riskReminders.slice(0, 2).map((item) => `<p>${item}</p>`).join("")}
+        </div>
+      </aside>
     </section>
 
-    <section class="content-grid research-entry">
+    <section class="research-strip">
       <div class="section-title">
         <div>
           <span class="layer-pill muted">第二层：研究人员看</span>
-          <h3>研究指标统一收进第二层</h3>
+          <h3>需要深挖时再进入研究层</h3>
         </div>
         <button class="link-button" data-view="research" type="button">进入研究中心</button>
       </div>
@@ -362,60 +457,63 @@ function renderHome() {
   `;
 }
 
-function renderMacroGate() {
+function renderDecisionStep(number, label, title, detail) {
   return `
-    <section class="macro-gate">
-      <div class="macro-head">
-        <div>
-          <span class="layer-pill">执行前检查</span>
-          <h2>${macroRegime.regime}</h2>
-          <p>${macroRegime.summary}</p>
-        </div>
-        <div class="macro-status ${macroRegime.allowStockSelection ? "is-open" : "is-closed"}">
-          <span>${macroRegime.status}</span>
-          <strong>${macroRegime.confidence}</strong>
-          <em>宏观置信度</em>
-        </div>
-      </div>
-      <div class="macro-flow">
-        <span>宏观</span>
-        <span>板块</span>
-        <span>仓位</span>
-        <span>风险</span>
-        <span>个股</span>
-      </div>
-      <div class="macro-grid">
-        <div>
-          <h3>宏观信号</h3>
-          ${macroRegime.macroSignals.map((item) => `
-            <p><strong>${item.label}：${item.value}</strong>${item.tone}</p>
-          `).join("")}
-        </div>
-        <div>
-          <h3>板块方向</h3>
-          ${macroRegime.sectorAllocation.map((item) => `
-            <p><strong>${item.name} · ${item.stance}</strong>${item.target} · ${item.reason}</p>
-          `).join("")}
-        </div>
-        <div>
-          <h3>仓位配置</h3>
-          <p><strong>总仓位：</strong>${macroRegime.positionGuidance.gross}</p>
-          <p><strong>单只上限：</strong>${macroRegime.positionGuidance.singleStock}</p>
-          <p><strong>现金缓冲：</strong>${macroRegime.positionGuidance.cashBuffer}</p>
-        </div>
-        <div>
-          <h3>风险提醒</h3>
-          ${macroRegime.riskReminders.map((item) => `<p>${item}</p>`).join("")}
-        </div>
-      </div>
-    </section>
+    <div class="decision-step">
+      <span>${number}</span>
+      <strong>${label}</strong>
+      <h3>${title}</h3>
+      <p>${detail}</p>
+    </div>
   `;
 }
 
-function renderStrategySummaryCard() {
-  const strategy = selectedStrategy();
+function renderHomeCandidateRow(stock, type, rank) {
+  const watched = isWatched(stock.id);
+  const score = strategyAdjustedScore(stock);
+  const reason = strategyReason(stock);
   return `
-    <div class="strategy-card">
+    <div class="candidate-row">
+      <span class="candidate-rank">#${rank}</span>
+      <div class="candidate-main">
+        <div>
+          <span class="market-badge">${stock.board}</span>
+          <h3>${stock.name}</h3>
+          <small>${stock.symbol} · ${stock.industry}</small>
+        </div>
+        <p>${reason}</p>
+      </div>
+      <div class="candidate-score">
+        <strong>${score}</strong>
+        <em class="${riskClass(stock.risk)}">${stock.risk}</em>
+      </div>
+      <div class="candidate-actions">
+        <button class="ghost-button small" data-stock="${stock.id}" data-view="detail" type="button">详情</button>
+        <button class="ghost-button small" data-kline="${stock.id}" type="button">K线</button>
+        <button class="primary-button small" data-watch="${stock.id}" type="button">${watched ? "已观察" : "观察"}</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderSectorFocus(item, index) {
+  return `
+    <div class="sector-focus-row">
+      <span>${String(index + 1).padStart(2, "0")}</span>
+      <div>
+        <strong>${item.name}</strong>
+        <small>${item.stance} · ${item.reason}</small>
+      </div>
+      <em>${item.target}</em>
+    </div>
+  `;
+}
+
+function renderStrategySummaryCard(variant = "") {
+  const strategy = selectedStrategy();
+  const className = variant ? `strategy-card ${variant}` : "strategy-card";
+  return `
+    <div class="${className}">
       <div class="layer-card-head">
         <span>当前策略</span>
         <strong>${strategy.name}</strong>
@@ -452,9 +550,10 @@ function renderSelection(type) {
       <div class="notice-strip">策略参数：${strategy.apiHint}</div>
     </section>
     <section class="stock-grid">
-      ${canSelect
-        ? ranked.slice(0, 8).map((stock, index) => renderStockCard(stock, type, index + 1)).join("")
-        : renderMacroBlockedState()}
+      ${canSelect ? ranked
+        .slice(0, 8)
+        .map((stock, index) => renderStockCard(stock, type, index + 1))
+        .join("") : renderMacroBlockedState()}
     </section>
   `;
 }
@@ -462,8 +561,12 @@ function renderSelection(type) {
 function renderRanking(market) {
   const list = market === "cn" ? cnStocks() : hkStocks();
   const title = market === "cn" ? "A股榜单" : "港股榜单";
-  const filtered = state.riskFilter === "all" ? list : list.filter((stock) => stock.risk === state.riskFilter);
-  const rankedAll = state.rankingFrequency === "weekly" ? byWeeklyRank(filtered) : byDailyRank(filtered);
+  const filtered = state.riskFilter === "all"
+    ? list
+    : list.filter((stock) => stock.risk === state.riskFilter);
+  const rankedAll = state.rankingFrequency === "weekly"
+    ? byWeeklyRank(filtered)
+    : byDailyRank(filtered);
   const ranked = rankedAll.slice(0, state.topN);
   const frequencyLabel = state.rankingFrequency === "weekly" ? "周频" : "日频";
   const strategy = selectedStrategy();
@@ -474,14 +577,21 @@ function renderRanking(market) {
       <div>
         <span class="layer-pill muted">第二层：研究人员看</span>
         <h2>${title}</h2>
-        <p>${macroRegime.status}后展示 ${frequencyLabel} Top ${state.topN}，已按“${strategy.name}”重排。</p>
+        <p>
+          ${macroRegime.status}后展示 ${frequencyLabel} Top ${state.topN}，
+          已按“${strategy.name}”重排。
+        </p>
       </div>
       <div class="ranking-controls">
         <label class="filter-control">
           榜单周期
           <select data-ranking-frequency>
-            <option value="daily" ${state.rankingFrequency === "daily" ? "selected" : ""}>日频</option>
-            <option value="weekly" ${state.rankingFrequency === "weekly" ? "selected" : ""}>周频</option>
+            <option value="daily" ${state.rankingFrequency === "daily" ? "selected" : ""}>
+              日频
+            </option>
+            <option value="weekly" ${state.rankingFrequency === "weekly" ? "selected" : ""}>
+              周频
+            </option>
           </select>
         </label>
         <label class="filter-control">
@@ -505,7 +615,8 @@ function renderRanking(market) {
     </section>
     <section class="ranking-table" aria-label="${title}">
       <div class="ranking-row ranking-head">
-        <span>排名</span><span>股票</span><span>评分</span><span>风险</span><span>观察周期</span><span>入选理由</span><span>操作</span>
+        <span>排名</span><span>股票</span><span>评分</span><span>风险</span>
+        <span>观察周期</span><span>入选理由</span><span>操作</span>
       </div>
       ${canSelect && ranked.length
         ? ranked.map((stock, index) => renderRankingRow(stock, index + 1)).join("")
@@ -1158,17 +1269,33 @@ function bindEvents() {
   });
 
   document.querySelectorAll("[data-watch]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const id = button.getAttribute("data-watch");
       if (!id) return;
+      const previous = [...state.watchlist];
       if (isWatched(id)) {
         state.watchlist = state.watchlist.filter((item) => item.id !== id);
+        if (state.apiStatus.mode === "api") {
+          removeWatchlistItem(id).catch(() => {
+            state.watchlist = previous;
+            saveWatchlist();
+            render();
+          });
+        }
       } else {
         const stock = stocks.find((item) => item.id === id);
+        const note = `${stock?.name || id} 已加入观察，等待下一期榜单更新后复核。`;
         state.watchlist = [
           ...state.watchlist,
-          { id, note: `${stock?.name || id} 已加入观察，等待下一期榜单更新后复核。` }
+          { id, note }
         ];
+        if (state.apiStatus.mode === "api") {
+          addWatchlistItem(id, note).catch(() => {
+            state.watchlist = previous;
+            saveWatchlist();
+            render();
+          });
+        }
       }
       saveWatchlist();
       render();
@@ -1176,9 +1303,17 @@ function bindEvents() {
   });
 
   document.querySelectorAll("[data-remove-watch]").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       const id = button.getAttribute("data-remove-watch");
+      const previous = [...state.watchlist];
       state.watchlist = state.watchlist.filter((item) => item.id !== id);
+      if (state.apiStatus.mode === "api") {
+        removeWatchlistItem(id).catch(() => {
+          state.watchlist = previous;
+          saveWatchlist();
+          render();
+        });
+      }
       saveWatchlist();
       render();
     });
@@ -1220,7 +1355,12 @@ function bindEvents() {
     strategySelector.addEventListener("change", (event) => {
       state.strategyId = event.target.value;
       saveStrategyId();
+      state.apiStatus = {
+        ...state.apiStatus,
+        detail: state.apiStatus.mode === "api" ? "正在刷新该策略的后端榜单..." : state.apiStatus.detail
+      };
       render();
+      if (state.apiStatus.mode === "api") hydrateFromApi();
     });
   }
 
@@ -1250,3 +1390,4 @@ function bindEvents() {
 }
 
 render();
+hydrateFromApi();

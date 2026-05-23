@@ -1,11 +1,44 @@
 from copy import deepcopy
 from typing import Optional
 
+from backend.api.watchlist_store import watchlist_store
+
 
 MOCK_UPDATED_AT = "2026-05-22T18:30:00+08:00"
 MOCK_PUBLISHED_AT = "2026-05-22T19:00:00+08:00"
 DEFAULT_STRATEGY_ID = "momentum_quality_daily"
 RISK_NOTICE = "本报告仅用于内部研究参考，不构成投资建议。"
+
+_MACRO_REGIME = {
+    "as_of": "2026-05-22T17:40:00+08:00",
+    "status": "允许轻仓观察",
+    "allow_stock_selection": True,
+    "regime": "结构性中性偏谨慎",
+    "confidence": 72,
+    "summary": "宏观环境没有触发全面回避，但波动中等偏高，应先控制总仓位。",
+    "macro_signals": [
+        {"label": "流动性", "value": "中性", "tone": "资金面未明显收紧"},
+        {"label": "风险偏好", "value": "谨慎", "tone": "高波动主题需要降权"},
+        {"label": "跨市场", "value": "分化", "tone": "A股偏结构，港股修复但扰动更高"},
+    ],
+    "sector_allocation": [
+        {"name": "高端制造", "stance": "优先观察", "target": "25%", "reason": "趋势改善"},
+        {"name": "互联网平台", "stance": "谨慎增配", "target": "20%", "reason": "修复延续"},
+        {"name": "金融", "stance": "防守配置", "target": "20%", "reason": "波动较低"},
+        {"name": "半导体", "stance": "控制仓位", "target": "15%", "reason": "热度和波动同步高"},
+    ],
+    "position_guidance": {
+        "gross": "30% 到 50%",
+        "single_stock": "单只不超过 8%",
+        "cash_buffer": "保留至少 50% 现金或低风险仓位",
+        "rebalance": "宏观状态维持允许观察时，再按日频榜单小步调整。",
+    },
+    "risk_reminders": [
+        "若市场波动继续上升，先降总仓位，再减少高波动行业暴露。",
+        "行业方向不清晰时，只保留观察名单，不扩大候选股数量。",
+        "任何个股入选都不能覆盖宏观风险和组合仓位约束。",
+    ],
+}
 
 _STRATEGIES = [
     {
@@ -517,30 +550,15 @@ _REPORTS = [
     },
 ]
 
-_WATCHLIST_BY_USER = {
-    "viewer": [
-        {
-            "symbol": "600519.SH",
-            "note": "长期观察行业龙头",
-            "created_at": "2026-05-22T20:00:00+08:00",
-        }
-    ],
-    "researcher": [
-        {
-            "symbol": "00700.HK",
-            "note": "观察港股互联网权重股",
-            "created_at": "2026-05-22T20:05:00+08:00",
-        }
-    ],
-    "admin": [],
-}
-
-
 def paginate(items: list, page: int, page_size: int) -> tuple[list, int]:
     total = len(items)
     start = (page - 1) * page_size
     end = start + page_size
     return items[start:end], total
+
+
+def get_macro_regime() -> dict:
+    return deepcopy(_MACRO_REGIME)
 
 
 def list_strategies() -> list:
@@ -583,7 +601,7 @@ def list_watchlist(
     page: int,
     page_size: int,
 ) -> tuple[list, int]:
-    entries = _WATCHLIST_BY_USER.setdefault(username, [])
+    entries = watchlist_store.list_entries(username)
     items = []
     for entry in entries:
         detail = _STOCK_DETAILS.get(entry["symbol"])
@@ -615,17 +633,13 @@ def add_watchlist_item(username: str, symbol: str, note: Optional[str]) -> tuple
     if not detail:
         return None, "not_found"
 
-    entries = _WATCHLIST_BY_USER.setdefault(username, [])
+    entries = watchlist_store.list_entries(username)
     if any(entry["symbol"] == normalized_symbol for entry in entries):
         return None, "exists"
 
-    entries.append(
-        {
-            "symbol": normalized_symbol,
-            "note": note,
-            "created_at": "2026-05-22T20:30:00+08:00",
-        }
-    )
+    created_at = watchlist_store.add_entry(username, normalized_symbol, note)
+    if created_at is None:
+        return None, "exists"
     item = {
         "symbol": detail["symbol"],
         "name": detail["name"],
@@ -635,19 +649,13 @@ def add_watchlist_item(username: str, symbol: str, note: Optional[str]) -> tuple
         "latest_score": detail["score"],
         "still_on_ranking": any(row["symbol"] == detail["symbol"] for row in _RANKINGS),
         "note": note,
-        "created_at": "2026-05-22T20:30:00+08:00",
+        "created_at": created_at,
     }
     return deepcopy(item), None
 
 
 def remove_watchlist_item(username: str, symbol: str) -> bool:
-    normalized_symbol = symbol.upper()
-    entries = _WATCHLIST_BY_USER.setdefault(username, [])
-    kept_entries = [entry for entry in entries if entry["symbol"] != normalized_symbol]
-    if len(kept_entries) == len(entries):
-        return False
-    _WATCHLIST_BY_USER[username] = kept_entries
-    return True
+    return watchlist_store.remove_entry(username, symbol)
 
 
 def list_reports(

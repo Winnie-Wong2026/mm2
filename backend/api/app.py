@@ -4,14 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.api.responses import error_response
-from backend.api.routes import auth, rankings, reports, stocks, strategies, tasks, watchlist
+from backend.api.routes import auth, macro, rankings, reports, stocks, strategies, tasks, watchlist
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="MM2 AI Quant Stock Selection API",
-        version="0.1.0",
-        description="First-stage local FastAPI backend with mock data.",
+        version="0.2.0",
+        description="Local FastAPI backend for v0.2 stock-selection research workflows.",
     )
 
     app.add_middleware(
@@ -32,6 +32,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "service": "mm2-backend",
+            "version": "0.2.0",
             "mock": True,
         }
 
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+    app.include_router(macro.router, prefix="/api", tags=["macro"])
     app.include_router(strategies.router, prefix="/api", tags=["strategies"])
     app.include_router(rankings.router, prefix="/api", tags=["rankings"])
     app.include_router(stocks.router, prefix="/api", tags=["stocks"])

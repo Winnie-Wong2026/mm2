@@ -7,6 +7,7 @@
 当前后端平台线程只负责：
 
 - 登录、当前用户、角色权限骨架
+- 宏观状态、板块方向、仓位配置和风险提醒 API
 - 当前榜单和股票详情 API
 - 可选策略列表 API
 - 用户观察名单 API
@@ -262,7 +263,49 @@ GET /api/strategies
 }
 ```
 
-### 4.5 当前榜单
+### 4.5 宏观状态
+
+```text
+GET /api/macro-regime
+```
+
+响应字段：
+
+```json
+{
+  "data": {
+    "as_of": "2026-05-22T17:40:00+08:00",
+    "status": "允许轻仓观察",
+    "allow_stock_selection": true,
+    "regime": "结构性中性偏谨慎",
+    "confidence": 72,
+    "summary": "宏观环境没有触发全面回避，但波动中等偏高，应先控制总仓位。",
+    "macro_signals": [
+      {"label": "流动性", "value": "中性", "tone": "资金面未明显收紧"}
+    ],
+    "sector_allocation": [
+      {"name": "高端制造", "stance": "优先观察", "target": "25%", "reason": "趋势改善"}
+    ],
+    "position_guidance": {
+      "gross": "30% 到 50%",
+      "single_stock": "单只不超过 8%",
+      "cash_buffer": "保留至少 50% 现金或低风险仓位",
+      "rebalance": "宏观状态维持允许观察时，再按日频榜单小步调整。"
+    },
+    "risk_reminders": [
+      "任何个股入选都不能覆盖宏观风险和组合仓位约束。"
+    ]
+  },
+  "meta": {
+    "request_id": "mock-request",
+    "mock": true
+  }
+}
+```
+
+如果 `allow_stock_selection=false`，前端不应展示个股 Top N，报告也应优先展示风险提醒和仓位约束。
+
+### 4.6 当前榜单
 
 ```text
 GET /api/rankings
@@ -312,7 +355,7 @@ GET /api/rankings
 }
 ```
 
-### 4.6 股票详情
+### 4.7 股票详情
 
 ```text
 GET /api/stocks/{symbol}
@@ -364,7 +407,7 @@ GET /api/stocks/{symbol}
 }
 ```
 
-### 4.7 观察名单
+### 4.8 观察名单
 
 ```text
 GET /api/watchlist
@@ -427,7 +470,7 @@ DELETE /api/watchlist/{symbol}
 }
 ```
 
-### 4.8 报告列表
+### 4.9 报告列表
 
 ```text
 GET /api/reports
@@ -455,7 +498,7 @@ GET /api/reports
 }
 ```
 
-### 4.9 报告详情
+### 4.10 报告详情
 
 ```text
 GET /api/reports/{report_id}
@@ -487,7 +530,7 @@ GET /api/reports/{report_id}
 }
 ```
 
-### 4.10 任务状态
+### 4.11 任务状态
 
 ```text
 GET /api/tasks/status

@@ -233,6 +233,12 @@ p {
   font-size: 14px;
 }
 
+.topbar-status small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .strategy-switcher {
   min-width: 300px;
   padding: 12px 14px;
@@ -263,18 +269,33 @@ p {
   font-size: 14px;
 }
 
+.home-overview,
+.home-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.home-context {
+  display: grid;
+  gap: 18px;
+}
+
+.home-primary,
+.home-mini-card,
+.candidate-board,
+.market-focus-panel,
+.research-strip,
 .hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
-  gap: 18px;
-  align-items: stretch;
+  min-width: 0;
 }
 
-.hero-side-stack {
-  display: grid;
-  gap: 18px;
-}
-
+.home-primary,
+.home-mini-card,
+.candidate-board,
+.market-focus-panel,
+.research-strip,
 .hero-copy,
 .macro-gate,
 .market-card,
@@ -292,6 +313,288 @@ p {
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.home-primary {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  align-content: space-between;
+}
+
+.home-primary-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.home-primary h2 {
+  max-width: 640px;
+  margin-bottom: 10px;
+  font-size: 28px;
+}
+
+.home-primary p {
+  max-width: 760px;
+  margin-bottom: 0;
+}
+
+.decision-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.decision-step {
+  min-height: 100px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.decision-step span {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.decision-step strong {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.decision-step h3 {
+  margin: 0;
+}
+
+.decision-step p {
+  color: #52647a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.home-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.home-primary .macro-status {
+  padding: 12px;
+}
+
+.home-mini-card {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.home-mini-card > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.home-mini-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.home-mini-card strong {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.home-mini-card p {
+  margin-bottom: 0;
+  font-size: 13px;
+  display: none;
+}
+
+.mini-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mini-metrics span {
+  min-height: 46px;
+  padding: 9px;
+  border-radius: 8px;
+  background: #f8fafc;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.mini-metrics strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.candidate-board,
+.market-focus-panel,
+.research-strip {
+  padding: 20px;
+}
+
+.candidate-board .section-title p {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.candidate-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.candidate-list {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.candidate-list-head {
+  min-height: 46px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.candidate-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 58px;
+  gap: 12px;
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.candidate-rank {
+  color: var(--accent);
+  font-weight: 850;
+}
+
+.candidate-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.candidate-main h3 {
+  margin: 6px 0 2px;
+}
+
+.candidate-main p {
+  margin-bottom: 0;
+  color: #52647a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.candidate-score {
+  display: grid;
+  justify-items: end;
+  align-content: start;
+  gap: 4px;
+}
+
+.candidate-score strong {
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.candidate-score em {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.candidate-actions {
+  grid-column: 2 / 4;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sector-focus-list {
+  display: grid;
+  gap: 10px;
+}
+
+.sector-focus-row {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 42px;
+  gap: 10px;
+  align-items: center;
+  padding: 11px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.sector-focus-row span {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.sector-focus-row div {
+  display: grid;
+  gap: 3px;
+}
+
+.sector-focus-row em {
+  color: var(--text);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 850;
+  text-align: right;
+}
+
+.risk-note-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.risk-note-list p {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #8a4b10;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.research-strip {
+  display: grid;
+  gap: 12px;
+}
+
+.research-strip .section-title {
+  margin-bottom: 0;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.hero-side-stack {
+  display: grid;
+  gap: 18px;
 }
 
 .hero-copy {
@@ -520,6 +823,25 @@ p {
 
 .strategy-card p {
   margin-bottom: 0;
+}
+
+.strategy-card.compact {
+  padding: 16px;
+  gap: 10px;
+}
+
+.strategy-card.compact p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.strategy-card.compact .strategy-meta-grid span {
+  min-height: 46px;
+  padding: 8px;
+}
+
+.strategy-card.compact .strategy-factor-list {
+  display: none;
 }
 
 .strategy-meta-grid {
@@ -1424,6 +1746,11 @@ p {
 }
 
 @media (max-width: 1180px) {
+  .decision-steps,
+  .candidate-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .stock-grid {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
   }
@@ -1448,9 +1775,14 @@ p {
   }
 
   .topbar,
+  .home-overview,
+  .home-workbench,
+  .home-primary-head,
   .hero-grid,
   .macro-head,
   .macro-grid,
+  .decision-steps,
+  .candidate-columns,
   .two-col,
   .page-intro,
   .detail-head,
@@ -1523,6 +1855,7 @@ p {
   .stock-grid,
   .stock-grid.compact,
   .layer-field-list,
+  .mini-metrics,
   .strategy-meta-grid,
   .research-entry-grid,
   .research-metric-grid {
@@ -1563,8 +1896,59 @@ p {
     padding: 16px;
   }
 
+  .sidebar {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .nav-button {
+    min-height: 38px;
+    font-size: 13px;
+  }
+
+  .sidebar-note {
+    display: none;
+  }
+
   .hero-copy {
     padding: 22px;
+  }
+
+  .home-primary,
+  .candidate-board,
+  .market-focus-panel,
+  .research-strip {
+    padding: 18px;
+  }
+
+  .home-primary h2 {
+    font-size: 28px;
+  }
+
+  .home-context {
+    display: none;
+  }
+
+  .decision-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .decision-step {
+    min-height: 0;
+  }
+
+  .candidate-row {
+    grid-template-columns: 34px minmax(0, 1fr) 52px;
+    padding: 12px;
+  }
+
+  .candidate-actions {
+    grid-column: 1 / 4;
   }
 
   .hero-copy h2 {
@@ -1583,6 +1967,6 @@ p {
   }
 
   .nav-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

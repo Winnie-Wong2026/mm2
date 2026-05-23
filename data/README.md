@@ -22,6 +22,9 @@ data/processed/securities/market=hk/part.jsonl
 data/processed/trade_calendar/market=cn/part.jsonl
 data/processed/index_bars/market=cn/symbol=000300_CN/part.jsonl
 data/processed/valuation_snapshots/market=cn/part.jsonl
+data/processed/factors/strategy_id=momentum_quality_daily/frequency=daily/part.jsonl
+data/processed/strategy_signals/strategy_id=momentum_quality_daily/frequency=daily/part.jsonl
+data/processed/rankings/strategy_id=momentum_quality_daily/frequency=daily/market=cn/top_n=20/part.jsonl
 ```
 
 ## 真实数据小样本
@@ -39,3 +42,9 @@ python3 -m uv run python scripts/run_live_data_sample.py --include-snapshots
 ```
 
 全市场快照接口较慢，且免费源偶发返回空响应；行情、交易日历和指数样本默认不依赖该步骤。
+
+生成 v0.2 策略样本：
+
+```text
+.venv/bin/python scripts/run_strategy_sample.py
+```

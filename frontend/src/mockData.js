@@ -503,6 +503,7 @@ export const reports = [
 
 export const apiContracts = [
   { page: "策略选择", endpoint: "/api/strategies", fields: "可用策略、默认策略、风险偏好、适用市场、策略说明" },
+  { page: "宏观状态", endpoint: "/api/macro-regime", fields: "宏观门槛、板块方向、仓位配置、风险提醒" },
   { page: "榜单页", endpoint: "/api/rankings", fields: "market, frequency, top_n, strategy_id" },
   { page: "股票详情", endpoint: "/api/stocks/{symbol}", fields: "基础信息、评分、解释、风险、因子摘要" },
   { page: "观察名单", endpoint: "/api/watchlist", fields: "用户收藏、备注、最近榜单状态" },

@@ -1,5 +1,5 @@
 from backend.scoring import SimpleTopNScoringEngine
-from backend.strategies import StrategyContext
+from backend.strategies import MacroAssessment, StrategyContext
 from backend.strategies.explanations import DEFAULT_EXPLANATION_REGISTRY
 from backend.strategies.registry import build_registry
 
@@ -69,3 +69,23 @@ def test_example_strategy_generates_ranked_signals_and_rankings() -> None:
 
 def test_default_explanation_template_is_registered() -> None:
     assert DEFAULT_EXPLANATION_REGISTRY.list_template_ids() == ["default_stock_selection"]
+
+
+def test_macro_gate_can_block_stock_selection() -> None:
+    registry = build_registry()
+    strategy = registry.create("momentum_quality_daily")
+    context = StrategyContext(
+        trade_date="2026-05-22",
+        frequency="daily",
+        macro_assessment=MacroAssessment(
+            as_of="2026-05-22T17:40:00+08:00",
+            regime="risk_off",
+            allow_stock_selection=False,
+            confidence=82,
+            summary="宏观风险过高，暂不进入个股筛选。",
+        ),
+    )
+
+    signals = strategy.generate_signals([], context)
+
+    assert signals == []
