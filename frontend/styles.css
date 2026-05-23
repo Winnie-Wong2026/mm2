@@ -276,6 +276,7 @@ p {
 }
 
 .hero-copy,
+.macro-gate,
 .market-card,
 .layer-card,
 .strategy-card,
@@ -296,6 +297,99 @@ p {
 .hero-copy {
   padding: 30px;
   min-height: 220px;
+}
+
+.macro-gate {
+  padding: 22px;
+  display: grid;
+  gap: 18px;
+}
+
+.macro-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: start;
+}
+
+.macro-head p {
+  margin-bottom: 0;
+}
+
+.macro-status {
+  min-width: 150px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.macro-status.is-open {
+  background: #e6f4ef;
+  color: var(--accent);
+}
+
+.macro-status.is-closed {
+  background: #fff1f0;
+  color: var(--danger);
+}
+
+.macro-status span,
+.macro-status em {
+  font-size: 12px;
+  font-style: normal;
+}
+
+.macro-status strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.macro-flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.macro-flow span {
+  min-height: 34px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #405166;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.macro-grid div {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.macro-grid h3,
+.macro-grid p {
+  margin: 0;
+}
+
+.macro-grid p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.macro-grid strong {
+  display: block;
+  color: var(--text);
 }
 
 .hero-copy h2 {
@@ -1355,6 +1449,8 @@ p {
 
   .topbar,
   .hero-grid,
+  .macro-head,
+  .macro-grid,
   .two-col,
   .page-intro,
   .detail-head,
@@ -1375,6 +1471,7 @@ p {
   }
 
   .topbar-tools,
+  .macro-flow,
   .strategy-switcher {
     display: grid;
     grid-template-columns: 1fr;
@@ -1395,6 +1492,11 @@ p {
   }
 
   .strategy-switcher-note {
+    text-align: left;
+  }
+
+  .macro-status {
+    min-width: 0;
     text-align: left;
   }
 
