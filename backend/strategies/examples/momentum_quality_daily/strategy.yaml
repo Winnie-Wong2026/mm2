@@ -1,0 +1,38 @@
+strategy_id: momentum_quality_daily
+name: 趋势质量日频策略
+version: 0.1.0
+description: 使用趋势、质量、量能和波动风险因子生成 A股/港股日频候选股信号。
+enabled: true
+market:
+  - cn
+  - hk
+frequency: daily
+universe: mainstream
+factors:
+  - momentum_20d
+  - momentum_60d
+  - quality_score
+  - amount_change_20d
+  - volatility_20d
+model:
+  type: rule
+horizon:
+  - 5d
+  - 20d
+rebalance_rule: daily_after_close
+risk_rule:
+  exclude_st: true
+  exclude_suspended: true
+  min_avg_amount_20d: 50000000
+  max_risk_score: 85
+explanation_template: default_stock_selection
+entrypoint:
+  module: backend.strategies.examples.momentum_quality_daily.signal
+  class: MomentumQualityDailyStrategy
+output_top_n:
+  - 20
+  - 50
+tags:
+  - momentum
+  - quality
+

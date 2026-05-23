@@ -1,0 +1,30 @@
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Frontend / tooling
+node_modules/
+dist/
+build/
+.vite/
+
+# Local runtime
+*.log
+.env
+.env.*
+
+# Release archives
+*.zip
+*.tar.gz
+

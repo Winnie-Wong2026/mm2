@@ -1,0 +1,4 @@
+{"date": "2024-01-02", "open": 3426.27, "close": 3386.35, "high": 3426.27, "low": 3386.35, "amount": 116180726.0, "source_function": "stock_zh_index_daily_tx", "requested_symbol": "000300"}
+{"date": "2024-01-03", "open": 3379.75, "close": 3378.3, "high": 3392.85, "low": 3362.66, "amount": 105613851.0, "source_function": "stock_zh_index_daily_tx", "requested_symbol": "000300"}
+{"date": "2024-01-04", "open": 3375.02, "close": 3347.05, "high": 3375.02, "low": 3323.86, "amount": 106721013.0, "source_function": "stock_zh_index_daily_tx", "requested_symbol": "000300"}
+{"date": "2024-01-05", "open": 3341.31, "close": 3329.11, "high": 3372.54, "low": 3313.55, "amount": 126400574.0, "source_function": "stock_zh_index_daily_tx", "requested_symbol": "000300"}

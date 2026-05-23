@@ -1,0 +1,481 @@
+export const marketSummary = {
+  updatedAt: "2026-05-22 17:40",
+  nextRefresh: "下个交易日收盘后",
+  dailyCount: 40,
+  weeklyCount: 36,
+  dataStatus: "样例数据完整",
+  marketMood: "结构性活跃",
+  riskTone: "波动中等偏高",
+  sectors: [
+    { name: "半导体", heat: 92, tone: "资金活跃", risk: "波动偏高" },
+    { name: "高端制造", heat: 86, tone: "趋势改善", risk: "估值分化" },
+    { name: "互联网平台", heat: 78, tone: "修复延续", risk: "事件扰动" },
+    { name: "金融", heat: 65, tone: "防守稳定", risk: "弹性有限" }
+  ]
+};
+
+export const strategyProfiles = [
+  {
+    id: "momentum_quality_daily",
+    name: "均衡质量精选",
+    riskPreference: "中等",
+    horizon: "20 到 60 个交易日",
+    universe: "A股 + 港股",
+    description: "在趋势、质量、估值和波动之间保持均衡，适合作为默认观察池。",
+    suitableFor: "第一次看榜单的小白用户，以及需要稳定候选池的研究人员。",
+    keyFactors: ["质量评分", "趋势动量", "估值合理性", "成交活跃度"],
+    riskNotes: ["不追求单日强势冲高", "行业过度集中时会降权"],
+    weights: { trend: 0.24, liquidity: 0.18, valuation: 0.18, quality: 0.28, volatility: 0.12 },
+    volatilityMode: "low",
+    marketTilt: "all",
+    apiHint: "strategy_id=momentum_quality_daily"
+  },
+  {
+    id: "defensive_value_daily",
+    name: "稳健低波策略",
+    riskPreference: "低到中",
+    horizon: "1 到 3 个月",
+    universe: "A股 + 港股",
+    description: "优先选择质量稳定、波动较低、估值不过度透支的候选股。",
+    suitableFor: "更关注回撤控制和观察确定性的用户。",
+    keyFactors: ["质量评分", "低波动", "估值安全边际", "连续上榜"],
+    riskNotes: ["弹性可能弱于高动量策略", "强题材行情中可能排名靠后"],
+    weights: { trend: 0.14, liquidity: 0.12, valuation: 0.22, quality: 0.34, volatility: 0.18 },
+    volatilityMode: "low",
+    marketTilt: "all",
+    apiHint: "strategy_id=defensive_value_daily"
+  },
+  {
+    id: "active_growth_daily",
+    name: "成长动量增强",
+    riskPreference: "中高",
+    horizon: "10 到 30 个交易日",
+    universe: "A股 + 港股",
+    description: "更重视趋势动量和成交活跃度，适合寻找短中期弹性更强的候选股。",
+    suitableFor: "能接受波动、希望观察景气行业轮动的研究人员。",
+    keyFactors: ["趋势动量", "成交放大", "行业热度", "质量底线"],
+    riskNotes: ["波动和回撤可能更大", "需要更频繁复核上榜原因"],
+    weights: { trend: 0.36, liquidity: 0.25, valuation: 0.08, quality: 0.18, volatility: 0.13 },
+    volatilityMode: "high",
+    marketTilt: "all",
+    apiHint: "strategy_id=active_growth_daily"
+  },
+  {
+    id: "hk_recovery_daily",
+    name: "港股修复优先",
+    riskPreference: "中到中高",
+    horizon: "2 到 8 周",
+    universe: "港股优先，保留 A股对照",
+    description: "优先观察港股互联网、金融和高弹性修复方向，同时保留 A股候选作为对照。",
+    suitableFor: "重点跟踪港股修复窗口和跨市场比较的研究人员。",
+    keyFactors: ["港股市场倾斜", "趋势修复", "成交活跃度", "估值修复空间"],
+    riskNotes: ["事件扰动更敏感", "汇率和海外流动性需要额外跟踪"],
+    weights: { trend: 0.3, liquidity: 0.24, valuation: 0.2, quality: 0.16, volatility: 0.1 },
+    volatilityMode: "balanced",
+    marketTilt: "hk",
+    apiHint: "strategy_id=hk_recovery_daily"
+  }
+];
+
+export const backtestSummary = {
+  status: "建设中",
+  period: "A股 2015 至今，港股按稳定样本区间确认",
+  benchmark: "分市场对比 A股 / 港股候选池",
+  apiHint: "待回测线程确认接口路径",
+  metrics: [
+    { label: "历史回测", value: "预留" },
+    { label: "最大回撤", value: "预留" },
+    { label: "胜率", value: "预留" },
+    { label: "换手率", value: "预留" }
+  ],
+  notes: [
+    "先作为首页入口展示，不在前端自行计算回测结果",
+    "后续接收回测线程输出的标准化指标和曲线数据",
+    "指标展示必须同时保留风险提示和样本区间说明"
+  ]
+};
+
+export const researchProfiles = {
+  default: {
+    backtestPeriod: "2019-01 至 2026-05 mock",
+    cumulativeReturn: "+31.4%",
+    maxDrawdown: "-14.8%",
+    winRate: "54%",
+    turnover: "42% / 月",
+    equityCurve: [42, 45, 48, 46, 52, 57, 55, 61, 66, 72],
+    industryExposure: [
+      { name: "本行业", weight: 38 },
+      { name: "相关行业", weight: 27 },
+      { name: "其他", weight: 35 }
+    ],
+    modelExplanation: [
+      "综合评分主要来自趋势动量、质量评分和成交活跃度。",
+      "风险分数主要受波动率和行业集中度影响。",
+      "当前仅为 mock 解释，正式版本由策略解释模块返回。"
+    ]
+  },
+  "600519.SH": {
+    backtestPeriod: "2019-01 至 2026-05 mock",
+    cumulativeReturn: "+46.2%",
+    maxDrawdown: "-12.5%",
+    winRate: "58%",
+    turnover: "28% / 月",
+    equityCurve: [48, 50, 54, 53, 58, 64, 67, 71, 76, 82],
+    industryExposure: [
+      { name: "食品饮料", weight: 46 },
+      { name: "大消费", weight: 24 },
+      { name: "其他", weight: 30 }
+    ],
+    modelExplanation: [
+      "质量评分贡献最高，支撑中期观察价值。",
+      "趋势动量温和改善，但短期弹性不是主要来源。",
+      "估值不低，因此风险提示不能弱化。"
+    ]
+  },
+  "688981.SH": {
+    backtestPeriod: "2020-01 至 2026-05 mock",
+    cumulativeReturn: "+39.8%",
+    maxDrawdown: "-24.1%",
+    winRate: "51%",
+    turnover: "63% / 月",
+    equityCurve: [35, 43, 41, 49, 58, 54, 62, 70, 67, 78],
+    industryExposure: [
+      { name: "半导体", weight: 58 },
+      { name: "高端制造", weight: 22 },
+      { name: "其他", weight: 20 }
+    ],
+    modelExplanation: [
+      "趋势和成交活跃度贡献明显。",
+      "行业暴露偏集中，回撤风险高于稳健样本。",
+      "适合研究人员重点复核波动和事件敏感性。"
+    ]
+  },
+  "00700.HK": {
+    backtestPeriod: "2019-01 至 2026-05 mock",
+    cumulativeReturn: "+34.6%",
+    maxDrawdown: "-18.3%",
+    winRate: "55%",
+    turnover: "36% / 月",
+    equityCurve: [44, 46, 49, 47, 51, 55, 59, 62, 68, 73],
+    industryExposure: [
+      { name: "互联网平台", weight: 52 },
+      { name: "港股核心资产", weight: 26 },
+      { name: "其他", weight: 22 }
+    ],
+    modelExplanation: [
+      "质量、流动性和趋势评分较均衡。",
+      "外部市场情绪会放大短期波动。",
+      "连续上榜是当前模型解释中的重要信号。"
+    ]
+  }
+};
+
+export const stocks = [
+  {
+    id: "600519.SH",
+    name: "贵州茅台",
+    symbol: "600519.SH",
+    market: "cn",
+    board: "A股",
+    industry: "食品饮料",
+    score: 88,
+    risk: "中",
+    horizon: "20日到4周",
+    dailyRank: 1,
+    weeklyRank: 2,
+    change: "+1.8%",
+    consecutive: 4,
+    summary: "趋势保持稳健，成交活跃度温和回升，基本面质量评分靠前。",
+    strengths: ["中期趋势稳定", "财务质量评分高", "行业位置靠前"],
+    risks: ["估值不低", "短期弹性有限", "消费数据变化需跟踪"],
+    factors: { trend: 86, liquidity: 72, valuation: 61, quality: 95, volatility: 42 },
+    priceSeries: [72, 74, 73, 76, 78, 79, 81, 83],
+    explain: "适合放入稳健观察池，重点看成交额是否继续改善。",
+    apiHint: "/api/stocks/600519.SH"
+  },
+  {
+    id: "300750.SZ",
+    name: "宁德时代",
+    symbol: "300750.SZ",
+    market: "cn",
+    board: "A股",
+    industry: "电力设备",
+    score: 85,
+    risk: "中高",
+    horizon: "10日到20日",
+    dailyRank: 2,
+    weeklyRank: 5,
+    change: "+2.6%",
+    consecutive: 2,
+    summary: "动量因子改善明显，行业热度较高，但价格波动也同步放大。",
+    strengths: ["趋势动量回升", "行业热度靠前", "成交额明显放大"],
+    risks: ["波动偏高", "行业竞争消息敏感", "短线涨幅后需观察节奏"],
+    factors: { trend: 91, liquidity: 88, valuation: 54, quality: 82, volatility: 67 },
+    priceSeries: [58, 59, 63, 61, 66, 68, 72, 75],
+    explain: "适合做中短期观察，风险提示应放在首屏可见位置。",
+    apiHint: "/api/stocks/300750.SZ"
+  },
+  {
+    id: "688981.SH",
+    name: "中芯国际",
+    symbol: "688981.SH",
+    market: "cn",
+    board: "A股",
+    industry: "半导体",
+    score: 82,
+    risk: "中高",
+    horizon: "10日到20日",
+    dailyRank: 3,
+    weeklyRank: 1,
+    change: "+3.1%",
+    consecutive: 5,
+    summary: "行业热度高，连续多期进入候选池，需同时留意波动和事件影响。",
+    strengths: ["行业热度高", "连续上榜", "资金活跃度提升"],
+    risks: ["事件驱动明显", "波动较大", "估值修复空间需验证"],
+    factors: { trend: 89, liquidity: 90, valuation: 50, quality: 76, volatility: 72 },
+    priceSeries: [52, 55, 57, 56, 61, 64, 67, 71],
+    explain: "适合关注行业景气和成交变化，避免把单日强势理解为确定性。",
+    apiHint: "/api/stocks/688981.SH"
+  },
+  {
+    id: "601318.SH",
+    name: "中国平安",
+    symbol: "601318.SH",
+    market: "cn",
+    board: "A股",
+    industry: "非银金融",
+    score: 79,
+    risk: "中",
+    horizon: "4周到8周",
+    dailyRank: 8,
+    weeklyRank: 4,
+    change: "+0.9%",
+    consecutive: 3,
+    summary: "估值与防守属性较好，趋势不激进，适合偏稳健观察。",
+    strengths: ["估值分位较低", "波动可控", "周频评分稳定"],
+    risks: ["趋势强度一般", "基本面修复节奏慢", "市场风险偏好影响较大"],
+    factors: { trend: 68, liquidity: 74, valuation: 84, quality: 79, volatility: 38 },
+    priceSeries: [61, 62, 62, 63, 64, 64, 65, 66],
+    explain: "更适合周频维度观察，重点看评分是否持续改善。",
+    apiHint: "/api/stocks/601318.SH"
+  },
+  {
+    id: "600036.SH",
+    name: "招商银行",
+    symbol: "600036.SH",
+    market: "cn",
+    board: "A股",
+    industry: "银行",
+    score: 74,
+    risk: "低",
+    horizon: "4周到8周",
+    dailyRank: 12,
+    weeklyRank: 7,
+    change: "+0.5%",
+    consecutive: 3,
+    summary: "波动相对可控，估值位置偏低，适合做稳健观察样例。",
+    strengths: ["估值分位较低", "波动较低", "流动性稳定"],
+    risks: ["趋势弹性有限", "银行板块修复节奏慢", "宏观预期影响较大"],
+    factors: { trend: 60, liquidity: 86, valuation: 82, quality: 80, volatility: 31 },
+    priceSeries: [48, 49, 49, 50, 50, 51, 51, 52],
+    explain: "用于展示低风险候选股样例，重点观察评分是否稳定抬升。",
+    apiHint: "/api/stocks/600036.SH"
+  },
+  {
+    id: "688256.SH",
+    name: "寒武纪-U",
+    symbol: "688256.SH",
+    market: "cn",
+    board: "A股",
+    industry: "半导体",
+    score: 80,
+    risk: "高",
+    horizon: "5日到10日",
+    dailyRank: 6,
+    weeklyRank: 9,
+    change: "+4.8%",
+    consecutive: 1,
+    summary: "短期热度和动量较强，但波动风险高，需要明显前置风险提示。",
+    strengths: ["短期动量强", "行业热度高", "成交活跃"],
+    risks: ["波动很高", "估值敏感", "事件驱动明显"],
+    factors: { trend: 93, liquidity: 89, valuation: 38, quality: 67, volatility: 91 },
+    priceSeries: [42, 46, 50, 48, 55, 58, 63, 68],
+    explain: "仅适合作为高风险观察样例，不能只看评分忽略波动。",
+    apiHint: "/api/stocks/688256.SH"
+  },
+  {
+    id: "00700.HK",
+    name: "腾讯控股",
+    symbol: "00700.HK",
+    market: "hk",
+    board: "港股",
+    industry: "互联网平台",
+    score: 87,
+    risk: "中",
+    horizon: "20日到4周",
+    dailyRank: 1,
+    weeklyRank: 1,
+    change: "+2.2%",
+    consecutive: 6,
+    summary: "趋势、质量和流动性评分均衡，连续多期处于港股候选池前列。",
+    strengths: ["综合评分均衡", "流动性充足", "连续上榜"],
+    risks: ["外部市场情绪影响", "平台政策变化需关注", "汇率扰动"],
+    factors: { trend: 84, liquidity: 94, valuation: 68, quality: 88, volatility: 49 },
+    priceSeries: [64, 66, 65, 68, 69, 71, 72, 74],
+    explain: "适合港股核心观察池，报告中应展示连续上榜原因。",
+    apiHint: "/api/stocks/00700.HK"
+  },
+  {
+    id: "03690.HK",
+    name: "美团-W",
+    symbol: "03690.HK",
+    market: "hk",
+    board: "港股",
+    industry: "互联网平台",
+    score: 83,
+    risk: "中高",
+    horizon: "10日到20日",
+    dailyRank: 2,
+    weeklyRank: 3,
+    change: "+3.4%",
+    consecutive: 2,
+    summary: "短期趋势修复明显，成交活跃，但波动和消息面风险需要前置提示。",
+    strengths: ["趋势修复", "成交活跃", "行业热度回升"],
+    risks: ["波动偏高", "盈利预期变化敏感", "港股整体情绪扰动"],
+    factors: { trend: 88, liquidity: 91, valuation: 57, quality: 74, volatility: 75 },
+    priceSeries: [46, 48, 51, 50, 55, 57, 58, 62],
+    explain: "适合短中期观察，页面应突出风险等级而非只看分数。",
+    apiHint: "/api/stocks/03690.HK"
+  },
+  {
+    id: "01211.HK",
+    name: "比亚迪股份",
+    symbol: "01211.HK",
+    market: "hk",
+    board: "港股",
+    industry: "汽车",
+    score: 81,
+    risk: "中高",
+    horizon: "20日到4周",
+    dailyRank: 3,
+    weeklyRank: 2,
+    change: "+1.5%",
+    consecutive: 4,
+    summary: "行业景气和趋势评分较强，估值与竞争格局仍需跟踪。",
+    strengths: ["趋势较强", "行业关注度高", "周频稳定"],
+    risks: ["估值敏感", "价格竞争影响", "港股流动性波动"],
+    factors: { trend: 86, liquidity: 84, valuation: 55, quality: 80, volatility: 64 },
+    priceSeries: [55, 56, 58, 59, 63, 62, 65, 68],
+    explain: "适合放入新能源观察主题，避免单一行业过度集中。",
+    apiHint: "/api/stocks/01211.HK"
+  },
+  {
+    id: "00005.HK",
+    name: "汇丰控股",
+    symbol: "00005.HK",
+    market: "hk",
+    board: "港股",
+    industry: "银行",
+    score: 76,
+    risk: "中",
+    horizon: "4周到8周",
+    dailyRank: 9,
+    weeklyRank: 6,
+    change: "+0.7%",
+    consecutive: 3,
+    summary: "防守属性和流动性较好，趋势温和，适合与高波动候选股搭配观察。",
+    strengths: ["流动性稳定", "波动较可控", "周频分数稳定"],
+    risks: ["趋势弹性有限", "利率预期影响", "外部市场波动"],
+    factors: { trend: 62, liquidity: 89, valuation: 73, quality: 77, volatility: 41 },
+    priceSeries: [57, 58, 58, 59, 60, 60, 61, 62],
+    explain: "适合用于降低观察名单整体波动，重点看周频变化。",
+    apiHint: "/api/stocks/00005.HK"
+  },
+  {
+    id: "00941.HK",
+    name: "中国移动",
+    symbol: "00941.HK",
+    market: "hk",
+    board: "港股",
+    industry: "电信服务",
+    score: 75,
+    risk: "低",
+    horizon: "4周到12周",
+    dailyRank: 11,
+    weeklyRank: 7,
+    change: "+0.4%",
+    consecutive: 4,
+    summary: "防守属性明显，波动较低，适合补充港股低风险观察样例。",
+    strengths: ["分红和防守属性较强", "波动较低", "流动性稳定"],
+    risks: ["趋势弹性有限", "估值扩张空间有限", "汇率扰动"],
+    factors: { trend: 58, liquidity: 87, valuation: 70, quality: 82, volatility: 29 },
+    priceSeries: [60, 60, 61, 61, 62, 62, 63, 63],
+    explain: "适合用于观察名单中的低波动样例，重点看稳定性。",
+    apiHint: "/api/stocks/00941.HK"
+  },
+  {
+    id: "01024.HK",
+    name: "快手-W",
+    symbol: "01024.HK",
+    market: "hk",
+    board: "港股",
+    industry: "互联网平台",
+    score: 78,
+    risk: "高",
+    horizon: "5日到10日",
+    dailyRank: 6,
+    weeklyRank: 9,
+    change: "+5.1%",
+    consecutive: 1,
+    summary: "短线修复和资金活跃明显，但港股情绪和波动风险较高。",
+    strengths: ["短线趋势改善", "成交活跃", "平台板块热度回升"],
+    risks: ["波动很高", "消息面敏感", "短期涨跌幅可能放大"],
+    factors: { trend: 90, liquidity: 88, valuation: 46, quality: 69, volatility: 88 },
+    priceSeries: [40, 43, 46, 44, 49, 52, 54, 59],
+    explain: "用于展示高风险港股候选样例，风险标签必须和评分同屏展示。",
+    apiHint: "/api/stocks/01024.HK"
+  }
+];
+
+export const reports = [
+  {
+    id: "daily-2026-05-22",
+    title: "每日候选股研究摘要",
+    type: "日频",
+    date: "2026-05-22",
+    status: "已生成",
+    summary: "A股候选池偏向半导体和高端制造，港股候选池偏向互联网平台和汽车链。",
+    sections: ["市场整体状态", "A股候选股变化", "港股候选股变化", "主要驱动因素", "风险提示"],
+    apiHint: "/api/reports/daily-2026-05-22"
+  },
+  {
+    id: "weekly-2026-w21",
+    title: "本周观察名单复盘",
+    type: "周频",
+    date: "2026-W21",
+    status: "已生成",
+    summary: "周频榜单更强调连续性，半导体、互联网平台和防守金融同时出现在前列。",
+    sections: ["本周榜单变化", "连续上榜股票", "行业分布", "风险等级分布", "下周跟踪重点"],
+    apiHint: "/api/reports/weekly-2026-w21"
+  },
+  {
+    id: "risk-brief-2026-05-22",
+    title: "风险提示简报",
+    type: "专题",
+    date: "2026-05-22",
+    status: "草稿样例",
+    summary: "高热度行业的波动同步抬升，观察名单需要保留行业分散和风险等级筛选。",
+    sections: ["波动变化", "高风险候选股", "行业集中度", "数据质量提示"],
+    apiHint: "/api/reports/risk-brief-2026-05-22"
+  }
+];
+
+export const apiContracts = [
+  { page: "策略选择", endpoint: "/api/strategies", fields: "可用策略、默认策略、风险偏好、适用市场、策略说明" },
+  { page: "榜单页", endpoint: "/api/rankings", fields: "market, frequency, top_n, strategy_id" },
+  { page: "股票详情", endpoint: "/api/stocks/{symbol}", fields: "基础信息、评分、解释、风险、因子摘要" },
+  { page: "观察名单", endpoint: "/api/watchlist", fields: "用户收藏、备注、最近榜单状态" },
+  { page: "报告中心", endpoint: "/api/reports", fields: "报告列表、报告详情、生成状态" },
+  { page: "研究中心", endpoint: "待回测线程确认", fields: "因子明细、历史回测、收益曲线、最大回撤、胜率、换手率、行业暴露、模型解释" },
+  { page: "首页状态", endpoint: "/api/tasks/status", fields: "数据更新时间、榜单时间、报告时间、异常摘要" }
+];
